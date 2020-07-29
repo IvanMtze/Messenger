@@ -2,14 +2,27 @@ package chat;
 
 import java.awt.Font;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Locale;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Random;
 import java.util.Stack;
+import java.util.StringTokenizer;
 import java.util.Vector;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.ListModel;
+import sun.audio.AudioPlayer;
+import sun.audio.AudioStream;
 
 /**
  *
@@ -28,6 +41,26 @@ public class ChatUI extends javax.swing.JFrame implements Observer {
 
     public void setCl(Client cl) {
         this.cl = cl;
+        this.setTitle("Chat " + cl.name);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                int confirm = JOptionPane.showOptionDialog(
+                        null, "Are You Sure to Close Application?",
+                        "Exit Confirmation", JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE, null, null, null);
+                if (confirm == 0) {
+                    cl.sendMessage("logout");
+                    try {
+                        cl.mo.getOutput().close();
+                    } catch (IOException ex) {
+                        Logger.getLogger(ChatUI.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    System.exit(0);
+
+                }
+            }
+        });
     }
 
     public ChatUI() {
@@ -53,9 +86,13 @@ public class ChatUI extends javax.swing.JFrame implements Observer {
         btnSend = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
+        jMenuItem1 = new javax.swing.JMenuItem();
         jMenu2 = new javax.swing.JMenu();
+        jMenuItem2 = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setMinimumSize(new java.awt.Dimension(150, 100));
+        setSize(new java.awt.Dimension(150, 100));
 
         jPanel1.setLayout(new java.awt.BorderLayout());
 
@@ -74,6 +111,7 @@ public class ChatUI extends javax.swing.JFrame implements Observer {
         txtPanel.setEditable(false);
         txtPanel.setColumns(20);
         txtPanel.setRows(5);
+        txtPanel.setFocusable(false);
         jScrollPane3.setViewportView(txtPanel);
 
         jPanel4.add(jScrollPane3, java.awt.BorderLayout.CENTER);
@@ -82,6 +120,7 @@ public class ChatUI extends javax.swing.JFrame implements Observer {
 
         msgTxt.setText("Message here...");
         msgTxt.setToolTipText("Write your message here...");
+        msgTxt.setPreferredSize(new java.awt.Dimension(111, 50));
         msgTxt.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 msgTxtFocusGained(evt);
@@ -93,6 +132,9 @@ public class ChatUI extends javax.swing.JFrame implements Observer {
         msgTxt.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyTyped(java.awt.event.KeyEvent evt) {
                 msgTxtKeyTyped(evt);
+            }
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                msgTxtKeyPressed(evt);
             }
         });
         jPanel6.add(msgTxt, java.awt.BorderLayout.CENTER);
@@ -111,10 +153,28 @@ public class ChatUI extends javax.swing.JFrame implements Observer {
 
         getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
 
-        jMenu1.setText("File");
+        jMenu1.setText("Menu");
+
+        jMenuItem1.setText("logout");
+        jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem1ActionPerformed(evt);
+            }
+        });
+        jMenu1.add(jMenuItem1);
+
         jMenuBar1.add(jMenu1);
 
-        jMenu2.setText("Edit");
+        jMenu2.setText("Actions");
+
+        jMenuItem2.setText("Send nudge");
+        jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem2ActionPerformed(evt);
+            }
+        });
+        jMenu2.add(jMenuItem2);
+
         jMenuBar1.add(jMenu2);
 
         setJMenuBar(jMenuBar1);
@@ -124,33 +184,55 @@ public class ChatUI extends javax.swing.JFrame implements Observer {
 
     private void btnSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSendActionPerformed
         String msg = msgTxt.getText();
-        if (!msg.equals("") || !msg.equals("Message here...")) {
+        if (jList2.getSelectedValue() != null) {
+            if (!msg.equals("") && !msg.equals("Message here...")) {
+                messageHistory.add(msg);
+                messageIndex = messageHistory.size() - 1;
+                cl.sendMessage(jList2.getSelectedValue() + ":" + msg);
+            }
+        } else if (!msg.equals("") && !msg.equals("Message here...")) {
             messageHistory.add(msg);
-            messageIndex = messageHistory.size();
-            cl.sendMessage(jList2.getSelectedValue() + ":" + msg);
-            //txtPanel.append(msg);
+            messageIndex = messageHistory.size() - 1;
+            cl.sendMessage(jList2.getModel().getElementAt(0) + ":" + msg);
         }
     }//GEN-LAST:event_btnSendActionPerformed
 
     private void msgTxtKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_msgTxtKeyTyped
-        if (evt.getKeyCode() == KeyEvent.VK_UP) {
-            if (messageIndex > 0 && messageIndex < messageHistory.size()) {
-                msgTxt.setText(messageHistory.get(messageIndex--));
-            }
-        } else if (evt.getKeyCode() == KeyEvent.VK_DOWN) {
-            if (messageIndex > 0 && messageIndex < messageHistory.size()) {
-                msgTxt.setText(messageHistory.get(messageIndex++));
-            }
-        }
+
     }//GEN-LAST:event_msgTxtKeyTyped
 
     private void msgTxtFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_msgTxtFocusGained
-        msgTxt.setText("");
+        if (msgTxt.getText().equals("Message here...")) {
+            msgTxt.setText("");
+        }
     }//GEN-LAST:event_msgTxtFocusGained
 
     private void msgTxtFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_msgTxtFocusLost
-        msgTxt.setText("Message here...");
+        if (msgTxt.getText().equals("")) {
+            msgTxt.setText("Message here...");
+        }
     }//GEN-LAST:event_msgTxtFocusLost
+
+    private void msgTxtKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_msgTxtKeyPressed
+        if (evt.getKeyCode() == KeyEvent.VK_UP) {
+            if (messageIndex >= 0 && messageIndex <= messageHistory.size()) {
+                msgTxt.setText(messageHistory.get(messageIndex--));
+            }
+        } else if (evt.getKeyCode() == KeyEvent.VK_DOWN) {
+
+            if (messageIndex >= 0 && messageIndex <= messageHistory.size()) {
+                msgTxt.setText(messageHistory.get(messageIndex++));
+            }
+        }
+     }//GEN-LAST:event_msgTxtKeyPressed
+
+    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
+        logout();
+    }//GEN-LAST:event_jMenuItem1ActionPerformed
+
+    private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
+        cl.sendMessage(jList2.getModel().getElementAt(0) + ":" + "nudge-nudge");
+    }//GEN-LAST:event_jMenuItem2ActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -159,6 +241,8 @@ public class ChatUI extends javax.swing.JFrame implements Observer {
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JMenuItem jMenuItem1;
+    private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel4;
@@ -174,15 +258,66 @@ public class ChatUI extends javax.swing.JFrame implements Observer {
 
         if (arg.equals(Client.STATUS_OK)) {
             msgTxt.setText("");
+            System.out.println("mensage enviado");
         } else if (arg.equals(Client.STATUS_ERR)) {
             JOptionPane.showMessageDialog(this, "Unable to send message, try again", "Message Error", JOptionPane.ERROR_MESSAGE);
         } else if (arg.toString().contains("ADD-CLT-")) {
             String newClientName = arg.toString().subSequence(8, arg.toString().length()).toString();
             System.out.println("added client " + newClientName);
-            users.add(users.size(), newClientName);
-            txtPanel.append("has joined" + newClientName);
+            if (!cl.name.equals(newClientName) && !users.contains(newClientName)) {
+                users.add(users.size(), newClientName);
+                txtPanel.append("\n\t" + newClientName + " HAS JOINED THE CHAT \n");
+            }
+        } else if (arg.toString().contains("logout")) {
+            StringTokenizer tok = new StringTokenizer(arg.toString(),":");
+            String remove = tok.nextToken();
+            if (!cl.name.equals(remove) && users.contains(remove)) {
+                users.removeElement(remove);
+                txtPanel.append("\n\t" + remove + " HAS LEFT THE CHAT \n");
+            }
+        } else if (arg.toString().contains("nudge-nudge")) {
+            txtPanel.append("\n\tSOMEONE SENT A NUDGE NUDGE\n");
+            playSound("../sounds/nudge-nudge-msn.wav");
+            int x = (int) getLocation().getX();
+            int y = (int) getLocation().getY();
+            for (int i = 0; i < 10; i++) {
+                setLocation(x + (ThreadLocalRandom.current().nextInt(-30, 30)), y + (ThreadLocalRandom.current().nextInt(-30, 30)));
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(ChatUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            setLocation(x, y);
         } else {
-            txtPanel.append(arg.toString());
+            txtPanel.append(arg.toString() + "\n");
+            playSound("../sounds/messenger-tono-mensaje-.wav");
+        }
+    }
+
+    private void playSound(String file) {
+        try {
+            InputStream inputStream = getClass().getResourceAsStream(file);
+            AudioStream audioStream = new AudioStream(inputStream);
+            AudioPlayer.player.start(audioStream);
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+
+    private void logout() {
+        int confirm = JOptionPane.showOptionDialog(
+                this, "Are You Sure to Close Application?",
+                "Exit Confirmation", JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE, null, null, null);
+        if (confirm == 0) {
+            cl.sendMessage("logout");
+            System.exit(0);
+            try {
+                cl.mo.getOutput().close();
+            } catch (IOException ex) {
+                Logger.getLogger(ChatUI.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }
 

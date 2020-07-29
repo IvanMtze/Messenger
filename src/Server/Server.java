@@ -13,7 +13,7 @@ import java.io.*;
 import java.util.*;
 import java.net.*;
 
-public class Server{
+public class Server {
 
     // Vector to store active clients 
     static Vector<ClientHandler> ar = new Vector<>();
@@ -51,11 +51,13 @@ public class Server{
             System.out.println("Adding this client to active client list");
 
             // add this client to active clients list 
-            for (ClientHandler cl : ar) {
-                cl.dos.writeUTF("ADD-CLT-" + name);
-            }
-
             ar.add(mtch);
+
+            for (ClientHandler cl : ar) {
+                for (ClientHandler cla : ar) {
+                    cl.dos.writeUTF("ADD-CLT-" + cla.getName());
+                }
+            }
 
             // start the thread. 
             t.start();

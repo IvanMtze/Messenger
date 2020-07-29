@@ -42,10 +42,13 @@ public class ClientHandler implements Runnable {
             try {
                 // receive the string 
                 received = dis.readUTF();
-                System.out.println(received);
+                    System.out.println(received);
 
                 if (received.equals("logout")) {
                     this.isloggedin = false;
+                    for (ClientHandler mc : Server.ar) {
+                        mc.dos.writeUTF(this.name + ":" + "logout");
+                    }
                     this.s.close();
                     break;
                 }
@@ -55,14 +58,14 @@ public class ClientHandler implements Runnable {
                 String recipient = st.nextToken();
                 String MsgToSend = st.nextToken();
 
-
                 // search for the recipient in the connected devices list. 
                 // ar is the vector storing client of active users 
                 for (ClientHandler mc : Server.ar) {
                     // if the recipient is found, write on its 
                     // output stream 
                     if (mc.name.equals(recipient) && mc.isloggedin == true) {
-                        mc.dos.writeUTF(this.name + " : " + MsgToSend);
+                        mc.dos.writeUTF(this.name + " [PRIVATE] : " + MsgToSend);
+                        this.dos.writeUTF(this.name+ "[PRIVATE TO "+mc.getName()+"]"+MsgToSend);
                         break;
                     }
                 }
@@ -70,9 +73,11 @@ public class ClientHandler implements Runnable {
                     for (ClientHandler mc : Server.ar) {
                         // if the recipient is found, write on its 
                         // output stream 
-                        mc.dos.writeUTF(this.name + " : " + MsgToSend);
+                        mc.dos.writeUTF(this.name + " [GLOBAL] : " + MsgToSend);
                     }
                 }
+                //dos.flush();
+
             } catch (IOException e) {
 
                 e.printStackTrace();
@@ -86,5 +91,9 @@ public class ClientHandler implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public String getName() {
+        return name;
     }
 }

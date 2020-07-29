@@ -67,7 +67,6 @@ public final class Client extends Observable implements Observer {
                 notifyObservers(this.STATUS_OK);
             }
         } else if (o instanceof MessageReceiver) {
-            System.out.println(arg);
             setChanged();
             notifyObservers(arg);
         }

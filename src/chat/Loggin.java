@@ -77,6 +77,7 @@ public class Loggin extends javax.swing.JFrame {
                 cl.addObserver(ui);
                 ui.setCl(cl);
                 ui.setVisible(true);
+                ui.setSize(500,400);
                 
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(this, "FATAL ERROR", "Error :( ", JOptionPane.ERROR_MESSAGE);
