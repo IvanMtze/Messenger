@@ -13,7 +13,7 @@ import java.io.*;
 import java.util.*;
 import java.net.*;
 
-public class Server extends Observable {
+public class Server{
 
     // Vector to store active clients 
     static Vector<ClientHandler> ar = new Vector<>();

@@ -11,8 +11,8 @@ package chat;
  */
 public class Main {
     public static void main(String args[]){
-    Client c = new Client("ivan");
-    
+        Loggin loggin = new Loggin();
+        loggin.setVisible(true);
     }
     
 }

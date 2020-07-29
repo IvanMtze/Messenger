@@ -13,7 +13,7 @@ import java.util.Observable;
  *
  * @author wuser
  */
-public class MessageReceiver extends Observable implements Runnable {
+public class MessageReceiver extends Observable implements Runnable{
 
     private DataInputStream input;
 

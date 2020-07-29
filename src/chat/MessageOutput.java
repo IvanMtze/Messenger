@@ -19,11 +19,11 @@ public class MessageOutput extends Observable {
 
     private DataOutputStream output;
 
-    public DataOutputStream getInput() {
+    public DataOutputStream getOutput() {
         return output;
     }
 
-    public void setInput(DataOutputStream input) {
+    public void setOutput(DataOutputStream input) {
         this.output = input;
     }
 

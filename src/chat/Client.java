@@ -23,18 +23,14 @@ public final class Client extends Observable implements Observer {
     String name = "";
     String conver = "";
     MessageOutput mo;
-    
+
     final static int STATUS_OK = 200;
     final static int STATUS_ERR = 500;
 
-    public Client(String name) {
+    public Client(String name) throws IOException {
         this.name = name;
         this.mo = new MessageOutput();
-        try {
-            ClientInit(this.name);
-        } catch (IOException ex) {
-            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        ClientInit(this.name);
     }
 
     public void ClientInit(String name) throws UnknownHostException, IOException {
@@ -48,12 +44,14 @@ public final class Client extends Observable implements Observer {
         DataInputStream dis = new DataInputStream(s.getInputStream());
         DataOutputStream dos = new DataOutputStream(s.getOutputStream());
         dos.writeUTF(name);
-
+        
         // readMessage thread 
         MessageReceiver mr = new MessageReceiver();
         mr.setInput(dis);
         Thread readMessage = new Thread(mr);
         mr.addObserver(this);
+        mo.setOutput(dos);
+        mo.addObserver(this);
         readMessage.start();
     }
 
@@ -65,10 +63,12 @@ public final class Client extends Observable implements Observer {
     public void update(Observable o, Object arg) {
         if (o instanceof MessageOutput) {
             if (arg.equals("OK")) {
+                setChanged();
                 notifyObservers(this.STATUS_OK);
             }
         } else if (o instanceof MessageReceiver) {
             System.out.println(arg);
+            setChanged();
             notifyObservers(arg);
         }
     }
